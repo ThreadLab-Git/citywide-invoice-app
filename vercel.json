@@ -1,13 +1,3 @@
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/" }],
-  "env": {
-    "VITE_SUPABASE_URL": "https://azngxvryzpobhxikniyt.supabase.co",
-    "VITE_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF6bmd4dnJ5enBvYmh4aWtuaXl0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU3MzM1NjIsImV4cCI6MjA5MTMwOTU2Mn0.QGKjRisDRGqDSkjdLpfluNwkK_lOtm1O4Z6lEU52apo"
-  },
-  "build": {
-    "env": {
-      "VITE_SUPABASE_URL": "https://azngxvryzpobhxikniyt.supabase.co",
-      "VITE_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF6bmd4dnJ5enBvYmh4aWtuaXl0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU3MzM1NjIsImV4cCI6MjA5MTMwOTU2Mn0.QGKjRisDRGqDSkjdLpfluNwkK_lOtm1O4Z6lEU52apo"
-    }
-  }
+  "rewrites": [{ "source": "/(.*)", "destination": "/" }]
 }
