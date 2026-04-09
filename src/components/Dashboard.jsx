@@ -72,6 +72,23 @@ export default function Dashboard() {
     const { balance } = calcInvoiceTotals(inv)
     return sum + (balance > 0 ? balance : 0)
   }, 0)
+  const avgInvoice = invoices.length > 0 ? totalRevenue / invoices.length : 0
+  const now = new Date()
+  const thisMonthRevenue = invoices
+    .filter(inv => {
+      if (!inv.invoiceDate) return false
+      const d = new Date(inv.invoiceDate + 'T00:00:00')
+      return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()
+    })
+    .reduce((sum, inv) => sum + calcInvoiceTotals(inv).total, 0)
+  const lastMonthRevenue = invoices
+    .filter(inv => {
+      if (!inv.invoiceDate) return false
+      const d = new Date(inv.invoiceDate + 'T00:00:00')
+      const lm = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+      return d.getFullYear() === lm.getFullYear() && d.getMonth() === lm.getMonth()
+    })
+    .reduce((sum, inv) => sum + calcInvoiceTotals(inv).total, 0)
 
   return (
     <div className="min-h-screen" style={{ background: '#f1f5f4' }}>
@@ -97,6 +114,15 @@ export default function Dashboard() {
                 onMouseLeave={e => e.currentTarget.style.color = '#6b9e7a'}
               >
                 Customers
+              </button>
+              <button
+                onClick={() => navigate('/reports')}
+                className="px-4 py-1.5 rounded-lg text-sm font-medium transition-colors"
+                style={{ color: '#6b9e7a' }}
+                onMouseEnter={e => e.currentTarget.style.color = '#fff'}
+                onMouseLeave={e => e.currentTarget.style.color = '#6b9e7a'}
+              >
+                Reports
               </button>
             </div>
           </div>
@@ -137,7 +163,7 @@ export default function Dashboard() {
         </div>
 
         {/* Stat cards row inside header */}
-        <div className="max-w-7xl mx-auto px-6 pb-6 pt-2 grid grid-cols-4 gap-4">
+        <div className="max-w-7xl mx-auto px-6 pb-6 pt-2 grid grid-cols-3 gap-4">
           {[
             {
               label: 'Total Revenue', value: fmt(totalRevenue), sub: `${counts.all} invoice${counts.all !== 1 ? 's' : ''}`,
@@ -150,14 +176,12 @@ export default function Dashboard() {
               accent: '#f97316', accentBg: 'rgba(249,115,22,0.15)'
             },
             {
-              label: 'Paid', value: String(counts.paid), sub: 'invoices cleared',
-              icon: <path strokeLinecap="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>,
-              accent: '#22c55e', accentBg: 'rgba(34,197,94,0.15)'
-            },
-            {
-              label: 'Unpaid', value: String(counts.unpaid), sub: `${counts.partial} partial`,
-              icon: <path strokeLinecap="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>,
-              accent: '#f43f5e', accentBg: 'rgba(244,63,94,0.15)'
+              label: 'This Month', value: fmt(thisMonthRevenue),
+              sub: lastMonthRevenue > 0
+                ? `${thisMonthRevenue >= lastMonthRevenue ? '▲' : '▼'} vs ${fmt(lastMonthRevenue)} last month`
+                : `${counts.paid} paid · ${counts.unpaid} unpaid`,
+              icon: <path strokeLinecap="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>,
+              accent: '#3b82f6', accentBg: 'rgba(59,130,246,0.15)'
             },
           ].map(({ label, value, sub, icon, accent, accentBg }) => (
             <div key={label} className="rounded-2xl p-4 flex items-center gap-4" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>

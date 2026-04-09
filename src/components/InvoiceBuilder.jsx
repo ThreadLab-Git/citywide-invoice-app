@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useReactToPrint } from 'react-to-print'
 import {
@@ -240,7 +240,6 @@ function StyleGrid({ style, onChange, onCopy, onDelete, canDelete }) {
 
 function LineItem({ item, index, onChange, onDelete, canDelete }) {
   const [collapsed, setCollapsed] = useState(false)
-  const [showLocationCosts, setShowLocationCosts] = useState(false)
   const total = calcLineItemTotal(item)
   const totalQty = item.styles.reduce((sum, s) => sum + calcStyleQty(s), 0)
 
@@ -369,67 +368,50 @@ function LineItem({ item, index, onChange, onDelete, canDelete }) {
           <div className="border border-gray-200 rounded-xl overflow-hidden">
             <div className="flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-200">
               <h4 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Decoration Locations</h4>
-              <button
-                onClick={() => setShowLocationCosts(!showLocationCosts)}
-                className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-lg transition-colors ${showLocationCosts ? 'bg-green-100 text-green-700' : 'text-gray-500 hover:bg-gray-100'}`}
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3 h-3">
-                  <path strokeLinecap="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                {showLocationCosts ? 'Hide Costs' : 'Show Costs'}
-              </button>
             </div>
-            {showLocationCosts && (
-              <div className="px-4 py-2 bg-blue-50/50 border-b border-gray-200 grid grid-cols-[5rem_11rem_10rem_1fr_1fr] gap-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                <span></span>
-                <span>Type</span>
-                <span>Placement</span>
-                <span>Cost/unit ($)</span>
-                <span>Price/unit ($)</span>
-              </div>
-            )}
+            <div className="px-4 py-2 bg-blue-50/50 border-b border-gray-200 grid grid-cols-[5rem_11rem_10rem_1fr_1fr] gap-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              <span></span>
+              <span>Type</span>
+              <span>Placement</span>
+              <span>Cost/unit ($)</span>
+              <span>Price/unit ($)</span>
+            </div>
             <div className="divide-y divide-gray-100">
               {item.locations.map((loc, idx) => (
-                <div key={loc.id} className={`flex items-center gap-3 px-4 py-2.5 ${showLocationCosts ? 'grid grid-cols-[5rem_11rem_10rem_1fr_1fr]' : ''}`}>
-                  <span className="text-xs font-medium text-gray-400 flex-shrink-0">Location {idx + 1}{idx === 0 && <span className="text-red-400">*</span>}</span>
+                <div key={loc.id} className="grid grid-cols-[5rem_11rem_10rem_1fr_1fr] items-center gap-3 px-4 py-2.5">
+                  <span className="text-xs font-medium text-gray-400">Location {idx + 1}{idx === 0 && <span className="text-red-400">*</span>}</span>
                   <Select
                     value={loc.type}
                     onChange={v => updateLocation(idx, 'type', v)}
                     options={[{ value: '', label: 'No Item' }, ...DECORATION_TYPES]}
-                    className={showLocationCosts ? '' : 'w-44'}
                   />
                   <Select
                     value={loc.placement}
                     onChange={v => updateLocation(idx, 'placement', v)}
                     options={[{ value: '', label: 'N/A' }, ...PLACEMENTS]}
-                    className={showLocationCosts ? '' : 'w-40'}
                   />
-                  {showLocationCosts && (
-                    <>
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={loc.cost || ''}
-                        onChange={e => updateLocation(idx, 'cost', parseFloat(e.target.value) || 0)}
-                        placeholder="0.00"
-                        className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:border-green-500 outline-none"
-                      />
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={loc.price || ''}
-                        onChange={e => updateLocation(idx, 'price', parseFloat(e.target.value) || 0)}
-                        placeholder="0.00"
-                        className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:border-green-500 outline-none"
-                      />
-                    </>
-                  )}
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={loc.cost || ''}
+                    onChange={e => updateLocation(idx, 'cost', parseFloat(e.target.value) || 0)}
+                    placeholder="0.00"
+                    className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:border-green-500 outline-none"
+                  />
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={loc.price || ''}
+                    onChange={e => updateLocation(idx, 'price', parseFloat(e.target.value) || 0)}
+                    placeholder="0.00"
+                    className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:border-green-500 outline-none"
+                  />
                 </div>
               ))}
             </div>
-            {showLocationCosts && (() => {
+            {(() => {
               const activeLocations = item.locations.filter(loc => loc.type)
               const totalDecoCost = activeLocations.reduce((sum, loc) => sum + (parseFloat(loc.cost) || 0), 0)
               const totalDecoPrice = activeLocations.reduce((sum, loc) => sum + (parseFloat(loc.price) || 0), 0)
@@ -521,6 +503,25 @@ export default function InvoiceBuilder() {
   )
 
   const { subtotal, gst, total, paid, balance } = calcInvoiceTotals(invoice)
+
+  const jobProfit = useMemo(() => {
+    let garmentRevenue = 0, garmentCost = 0, decoRevenue = 0, decoCost = 0
+    for (const item of invoice.lineItems) {
+      const itemQty = item.styles.reduce((sum, s) => sum + calcStyleQty(s), 0)
+      garmentRevenue += item.styles.reduce((sum, s) => sum + calcStyleTotal(s), 0) * (1 - (item.unitDiscount || 0) / 100)
+      garmentCost += item.styles.reduce((sum, s) =>
+        sum + Object.values(s.sizes).reduce((a, sz) => a + (sz.qty || 0) * (sz.cost || 0), 0), 0)
+      const activeLocations = (item.locations || []).filter(loc => loc.type)
+      decoRevenue += activeLocations.reduce((sum, loc) => sum + (parseFloat(loc.price) || 0), 0) * itemQty
+      decoCost += activeLocations.reduce((sum, loc) => sum + (parseFloat(loc.cost) || 0), 0) * itemQty
+    }
+    const totalRevenue = garmentRevenue + decoRevenue
+    const totalCost = garmentCost + decoCost
+    const profit = totalRevenue - totalCost
+    const margin = totalRevenue > 0 ? (profit / totalRevenue * 100) : 0
+    const hasCostData = garmentCost > 0 || decoCost > 0
+    return { garmentRevenue, garmentCost, decoRevenue, decoCost, totalRevenue, totalCost, profit, margin, hasCostData }
+  }, [invoice.lineItems])
 
   function updateInvoice(updates) {
     setInvoice(prev => ({ ...prev, ...updates }))
@@ -826,6 +827,41 @@ export default function InvoiceBuilder() {
             Add New Line Item
           </button>
         </div>
+
+        {/* Job Profit Summary */}
+        {jobProfit.hasCostData && (
+          <div className="rounded-2xl overflow-hidden no-print" style={{ background: '#0f1f1a', boxShadow: '0 4px 24px rgba(15,31,26,0.2)' }}>
+            <div className="px-6 py-3.5 flex items-center gap-2 border-b" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" className="w-4 h-4">
+                <path strokeLinecap="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+              </svg>
+              <h3 className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.85)' }}>Job Profit</h3>
+              <span className="text-xs ml-auto" style={{ color: '#4d7a5e' }}>Internal — not shown on invoice</span>
+            </div>
+            <div className="p-5 grid grid-cols-4 gap-4">
+              {[
+                { label: 'Garment Revenue', value: jobProfit.garmentRevenue, sub: `Cost ${fmt(jobProfit.garmentCost)}`, color: '#22c55e' },
+                { label: 'Decoration Revenue', value: jobProfit.decoRevenue, sub: `Cost ${fmt(jobProfit.decoCost)}`, color: '#3b82f6' },
+                { label: 'Total Cost', value: jobProfit.totalCost, sub: `Revenue ${fmt(jobProfit.totalRevenue)}`, color: '#f97316' },
+                {
+                  label: 'Net Profit', value: jobProfit.profit,
+                  sub: `${jobProfit.margin.toFixed(1)}% margin`,
+                  color: jobProfit.profit >= 0 ? '#22c55e' : '#f43f5e',
+                  highlight: true
+                },
+              ].map(card => (
+                <div key={card.label} className="rounded-xl p-4" style={{
+                  background: card.highlight ? (jobProfit.profit >= 0 ? 'rgba(34,197,94,0.12)' : 'rgba(244,63,94,0.12)') : 'rgba(255,255,255,0.05)',
+                  border: card.highlight ? `1px solid ${jobProfit.profit >= 0 ? 'rgba(34,197,94,0.3)' : 'rgba(244,63,94,0.3)'}` : '1px solid rgba(255,255,255,0.06)'
+                }}>
+                  <div className="text-xs font-medium mb-2" style={{ color: '#6b9e7a' }}>{card.label}</div>
+                  <div className="text-xl font-bold mb-1" style={{ color: card.color }}>{fmt(card.value)}</div>
+                  <div className="text-xs" style={{ color: '#4d7a5e' }}>{card.sub}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Bottom row: Payments + Notes + Totals */}
         <div className="grid grid-cols-3 gap-5">
