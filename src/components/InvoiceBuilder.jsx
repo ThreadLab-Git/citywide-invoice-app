@@ -493,24 +493,15 @@ export default function InvoiceBuilder() {
     documentTitle: `Invoice-${invoice?.invoiceNumber}`,
   })
 
-  if (!invoice || !companyInfo) return (
-    <div className="min-h-screen flex items-center justify-center" style={{ background: '#0f1f1a' }}>
-      <div className="flex flex-col items-center gap-4">
-        <img src="/logo.svg" alt="Citywide Uniforms" style={{ height: '28px', opacity: 0.6 }} />
-        <div className="text-sm" style={{ color: '#6b9e7a' }}>Loading invoice…</div>
-      </div>
-    </div>
-  )
-
-  const { subtotal, gst, total, paid, balance } = calcInvoiceTotals(invoice)
-
   const jobProfit = useMemo(() => {
+    const empty = { garmentRevenue: 0, garmentCost: 0, decoRevenue: 0, decoCost: 0, totalRevenue: 0, totalCost: 0, profit: 0, margin: 0, hasCostData: false }
+    if (!invoice) return empty
     let garmentRevenue = 0, garmentCost = 0, decoRevenue = 0, decoCost = 0
     for (const item of invoice.lineItems) {
       const itemQty = item.styles.reduce((sum, s) => sum + calcStyleQty(s), 0)
       garmentRevenue += item.styles.reduce((sum, s) => sum + calcStyleTotal(s), 0) * (1 - (item.unitDiscount || 0) / 100)
       garmentCost += item.styles.reduce((sum, s) =>
-        sum + Object.values(s.sizes).reduce((a, sz) => a + (sz.qty || 0) * (sz.cost || 0), 0), 0)
+        sum + Object.values(s.sizes || {}).reduce((a, sz) => a + (sz.qty || 0) * (sz.cost || 0), 0), 0)
       const activeLocations = (item.locations || []).filter(loc => loc.type)
       decoRevenue += activeLocations.reduce((sum, loc) => sum + (parseFloat(loc.price) || 0), 0) * itemQty
       decoCost += activeLocations.reduce((sum, loc) => sum + (parseFloat(loc.cost) || 0), 0) * itemQty
@@ -521,7 +512,18 @@ export default function InvoiceBuilder() {
     const margin = totalRevenue > 0 ? (profit / totalRevenue * 100) : 0
     const hasCostData = garmentCost > 0 || decoCost > 0
     return { garmentRevenue, garmentCost, decoRevenue, decoCost, totalRevenue, totalCost, profit, margin, hasCostData }
-  }, [invoice.lineItems])
+  }, [invoice?.lineItems])
+
+  if (!invoice || !companyInfo) return (
+    <div className="min-h-screen flex items-center justify-center" style={{ background: '#0f1f1a' }}>
+      <div className="flex flex-col items-center gap-4">
+        <img src="/logo.svg" alt="Citywide Uniforms" style={{ height: '28px', opacity: 0.6 }} />
+        <div className="text-sm" style={{ color: '#6b9e7a' }}>Loading invoice…</div>
+      </div>
+    </div>
+  )
+
+  const { subtotal, gst, total, paid, balance } = calcInvoiceTotals(invoice)
 
   function updateInvoice(updates) {
     setInvoice(prev => ({ ...prev, ...updates }))
